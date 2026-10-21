@@ -1,5 +1,27 @@
 export const CADENCES = ['daily', 'weekly', 'monthly', 'yearly'];
 export const COLORS = ['#8b72df', '#57a997', '#df9c58', '#639ed5', '#d77fa2', '#8c98a9'];
+export const ACCENTS = [
+  { id: 'violet', name: 'Violet', light: '#8266d7', dark: '#ad91f7' },
+  { id: 'blue', name: 'Ocean', light: '#3974c8', dark: '#87b5fa' },
+  { id: 'teal', name: 'Teal', light: '#227f82', dark: '#70cbc9' },
+  { id: 'green', name: 'Forest', light: '#39815c', dark: '#88c99f' },
+  { id: 'rose', name: 'Rose', light: '#b54f79', dark: '#ed9ebc' },
+  { id: 'amber', name: 'Amber', light: '#97651d', dark: '#e4bd77' },
+  { id: 'orange', name: 'Sunset', light: '#b75b35', dark: '#efa681' },
+  { id: 'slate', name: 'Graphite', light: '#596a83', dark: '#a9bad3' },
+];
+export const normalizeName = name => String(name || '').trim().replace(/\s+/g, ' ');
+export function getOrCreateWorkspace(workspaces, input) {
+  const name = normalizeName(input);
+  if (!name) throw new Error('Please enter your name to open your workspace.');
+  if (name.length > 40) throw new Error('Use a name with 40 characters or fewer.');
+  const existing = workspaces.find(w => normalizeName(w.name).toLocaleLowerCase() === name.toLocaleLowerCase());
+  if (existing) return { workspace: existing, created: false };
+  if (workspaces.length >= 5) throw new Error('All 5 workspace slots are in use. Enter an existing name, or export and delete a workspace in Settings.');
+  const workspace = blankWorkspace(name);
+  workspaces.push(workspace);
+  return { workspace, created: true };
+}
 export const uid = () => globalThis.crypto.randomUUID();
 export function localDate(value = new Date()) {
   const d = value instanceof Date ? value : new Date(value);
@@ -35,7 +57,7 @@ export function completeTask(workspace, id, notes = '', links = []) {
   return next;
 }
 export function blankWorkspace(name) {
-  return { id: uid(), name, createdAt: new Date().toISOString(), tasks: [], projects: [], sessions: [], settings: { theme: 'light', focusMinutes: 25, reminders: false, dailyGoal: 5 } };
+  return { id: uid(), name: normalizeName(name), createdAt: new Date().toISOString(), tasks: [], projects: [], sessions: [], settings: { theme: 'light', accent: 'violet', focusMinutes: 25, reminders: false, dailyGoal: 5 } };
 }
 export function makeTask(data = {}) {
   return { id: uid(), title: '', description: '', projectId: '', due: localDate(), time: '', cadence: 'daily', repeat: false, priority: 'medium', status: 'todo', tags: [], subtasks: [], links: [], completionLinks: [], completionNotes: '', spent: 0, createdAt: new Date().toISOString(), completedAt: null, ...data };
@@ -47,6 +69,7 @@ export function validDate(value) { return typeof value === 'string' && /^\d{4}-\
 export function validateWorkspace(data) {
   if (!data || typeof data.name !== 'string' || !data.name.trim() || data.name.length > 40 || !Array.isArray(data.tasks) || !Array.isArray(data.projects) || data.tasks.length > 20000 || data.projects.length > 1000) throw new Error('This is not a valid Maya Tasker backup.');
   const result = blankWorkspace(data.name.trim());
+  if (!Number.isNaN(Date.parse(data.createdAt))) result.createdAt = data.createdAt;
   result.projects = data.projects.map(p => {
     if (typeof p.id !== 'string' || !/^[a-z0-9_-]{1,80}$/i.test(p.id) || typeof p.name !== 'string' || !p.name.trim()) throw new Error('Invalid project in backup.');
     return { id: p.id, name: p.name.slice(0, 80), description: String(p.description || '').slice(0, 1000), color: /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : COLORS[0], due: validDate(p.due) ? p.due : '' };
@@ -58,32 +81,6 @@ export function validateWorkspace(data) {
   });
   if (new Set(result.tasks.map(t => t.id)).size !== result.tasks.length || projectIds.size !== result.projects.length) throw new Error('Backup contains duplicate records.');
   result.sessions = Array.isArray(data.sessions) ? data.sessions.filter(s => s && !Number.isNaN(Date.parse(s.at)) && Number.isFinite(s.minutes) && s.minutes > 0).map(s => ({ at: s.at, minutes: s.minutes, taskId: typeof s.taskId === 'string' ? s.taskId : '' })) : [];
-  result.settings = { ...result.settings, theme: ['light', 'dark', 'system'].includes(data.settings?.theme) ? data.settings.theme : 'light', focusMinutes: Math.min(120, Math.max(1, Number(data.settings?.focusMinutes) || 25)), dailyGoal: Math.min(100, Math.max(1, Number(data.settings?.dailyGoal) || 5)), reminders: !!data.settings?.reminders };
+  result.settings = { ...result.settings, theme: ['light', 'dark', 'system'].includes(data.settings?.theme) ? data.settings.theme : 'light', accent: ACCENTS.some(a => a.id === data.settings?.accent) ? data.settings.accent : 'violet', focusMinutes: Math.min(120, Math.max(1, Number(data.settings?.focusMinutes) || 25)), dailyGoal: Math.min(100, Math.max(1, Number(data.settings?.dailyGoal) || 5)), reminders: !!data.settings?.reminders };
   return result;
-}
-export function demoWorkspace(name = 'Alex') {
-  const w = blankWorkspace(name); w.demo = true;
-  w.projects = [
-    { id: uid(), name: 'Website redesign', description: 'A fresh digital home. Thoughtful, useful, and a little delightful.', color: COLORS[0], due: shiftDate(localDate(), 14) },
-    { id: uid(), name: 'Personal growth', description: 'Make room for learning and the things that matter.', color: COLORS[1], due: '' },
-    { id: uid(), name: 'Product launch', description: 'Bring the next big idea into the world.', color: COLORS[2], due: shiftDate(localDate(), 28) }
-  ];
-  const p = w.projects.map(p => p.id); const today = localDate();
-  const specs = [
-    ['Explore homepage directions', p[0], 'high', 'in-progress', today, '09:30', 'daily'],
-    ['Read 20 pages of Atomic Habits', p[1], 'low', 'todo', today, '12:00', 'daily'],
-    ['Review launch checklist', p[2], 'high', 'todo', today, '14:00', 'weekly'],
-    ['Plan next week’s priorities', '', 'medium', 'todo', today, '16:30', 'weekly'],
-    ['Build the component library', p[0], 'medium', 'todo', shiftDate(today, 1), '10:00', 'weekly'],
-    ['Monthly reflection & reset', p[1], 'low', 'todo', shiftDate(today, 3), '', 'monthly'],
-    ['Write the product story', p[2], 'medium', 'todo', shiftDate(today, 2), '11:00', 'weekly'],
-    ['Set intentions for the year', p[1], 'medium', 'todo', shiftDate(today, 45), '', 'yearly'],
-    ['Send design feedback', p[0], 'high', 'todo', shiftDate(today, -1), '', 'daily']
-  ];
-  w.tasks = specs.map(([title, projectId, priority, status, due, time, cadence]) => makeTask({ title, projectId, priority, status, due, time, cadence, repeat: title.startsWith('Read'), tags: title.startsWith('Explore') ? ['design'] : [], description: title.startsWith('Explore') ? 'Explore three visual directions for the new homepage. Keep the experience clear, warm, and easy to navigate.' : '', subtasks: title.startsWith('Explore') ? [{ id: uid(), text: 'Collect references', done: true }, { id: uid(), text: 'Sketch three concepts', done: false }, { id: uid(), text: 'Choose a direction', done: false }] : [] }));
-  [2, 3, 1, 4, 2, 5, 2].forEach((count, day) => {
-    for (let i = 0; i < count; i++) w.tasks.push(makeTask({ title: ['Organize inspiration board', 'Review weekly goals', 'Update project notes', 'Clear the inbox', 'Morning planning'][i % 5], projectId: p[(i + day) % 3], status: 'completed', due: shiftDate(today, day - 6), completedAt: dateAt(shiftDate(today, day - 6)).toISOString(), completionNotes: 'Wrapped up and ready for the next step.', spent: 25 }));
-  });
-  w.sessions = [{ at: new Date().toISOString(), minutes: 25, taskId: '' }, { at: new Date().toISOString(), minutes: 50, taskId: '' }];
-  return w;
 }

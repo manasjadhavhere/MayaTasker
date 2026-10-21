@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { localDate, shiftDate, startOfWeek, nextOccurrence, makeTask, blankWorkspace, completeTask, validateWorkspace, safeUrl, validDate, demoWorkspace } from '../src/model.js';
+import { ACCENTS, getOrCreateWorkspace, localDate, shiftDate, startOfWeek, nextOccurrence, makeTask, blankWorkspace, completeTask, validateWorkspace, safeUrl, validDate } from '../src/model.js';
 
 test('date arithmetic stays on local calendar dates across year and DST boundaries', () => {
   assert.equal(shiftDate('2026-12-31', 1), '2027-01-01');
@@ -49,13 +49,17 @@ test('normal tasks complete without creating extra tasks; unknown IDs are safe',
   assert.equal(completeTask(w, 'missing'), null);
 });
 test('backup roundtrip keeps task evidence, projects, dates, sessions, and settings', () => {
-  const w = demoWorkspace('Test'); w.settings.theme = 'dark';
+  const w = blankWorkspace('Test'); w.settings.theme = 'dark'; w.settings.accent = 'teal';
+  w.projects.push({ id: 'test-project', name: 'Research', color: '#57a997', description: 'Project notes', due: '2026-11-01' });
+  w.tasks.push(makeTask({ title: 'Write report', projectId: 'test-project', status: 'completed', completionNotes: 'Published', completionLinks: ['https://example.com/report'], completedAt: new Date().toISOString() }));
+  w.sessions.push({ at: new Date().toISOString(), minutes: 25, taskId: w.tasks[0].id });
   const restored = validateWorkspace(JSON.parse(JSON.stringify(w)));
   assert.equal(restored.name, w.name);
   assert.equal(restored.tasks.length, w.tasks.length);
   assert.equal(restored.projects.length, w.projects.length);
   assert.equal(restored.sessions.length, w.sessions.length);
   assert.equal(restored.settings.theme, 'dark');
+  assert.equal(restored.settings.accent, 'teal');
   assert.deepEqual(restored.tasks.map(t => t.id), w.tasks.map(t => t.id));
   assert.notEqual(restored.id, w.id, 'import must create a separate workspace');
 });
@@ -88,4 +92,40 @@ test('workspaces and subtasks are isolated', () => {
   assert.equal(b.tasks.length, 0);
   assert.equal(b.settings.theme, 'light');
   assert.notEqual(a.id, b.id);
+});
+test('entering an existing name restores its data and preferences without creating another workspace', () => {
+  const workspaces = [];
+  const first = getOrCreateWorkspace(workspaces, '  Morgan   Lee  ');
+  assert.equal(first.created, true);
+  assert.equal(first.workspace.name, 'Morgan Lee');
+  assert.equal(first.workspace.tasks.length, 0);
+  assert.equal(first.workspace.projects.length, 0);
+  first.workspace.tasks.push(makeTask({ title: 'Continue tomorrow' }));
+  first.workspace.settings.accent = 'rose';
+  const saved = workspaces.map(w => validateWorkspace(JSON.parse(JSON.stringify(w))));
+  const returning = getOrCreateWorkspace(saved, 'mORGAN   lEE');
+  assert.equal(returning.created, false);
+  assert.equal(saved.length, 1);
+  assert.equal(returning.workspace.tasks[0].title, 'Continue tomorrow');
+  assert.equal(returning.workspace.settings.accent, 'rose');
+  const newcomer = getOrCreateWorkspace(saved, 'Jordan');
+  assert.equal(newcomer.created, true);
+  assert.equal(newcomer.workspace.tasks.length, 0);
+  assert.equal(newcomer.workspace.settings.accent, 'violet');
+});
+test('existing people can still open a workspace when all five slots are used', () => {
+  const workspaces = Array.from({ length: 5 }, (_, i) => blankWorkspace(`Person ${i + 1}`));
+  assert.equal(getOrCreateWorkspace(workspaces, 'PERSON 5').created, false);
+  assert.throws(() => getOrCreateWorkspace(workspaces, 'New person'), /5 workspace slots/);
+  assert.throws(() => getOrCreateWorkspace(workspaces, '   '), /enter your name/);
+});
+test('each theme color survives backup and reload, with a safe default for older or invalid settings', () => {
+  for (const accent of ACCENTS) {
+    const workspace = blankWorkspace('Test'); workspace.settings.accent = accent.id;
+    assert.equal(validateWorkspace(workspace).settings.accent, accent.id);
+  }
+  const old = blankWorkspace('Test'); delete old.settings.accent;
+  assert.equal(validateWorkspace(old).settings.accent, 'violet');
+  old.settings.accent = 'invalid-color';
+  assert.equal(validateWorkspace(old).settings.accent, 'violet');
 });

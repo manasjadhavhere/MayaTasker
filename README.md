@@ -10,7 +10,7 @@ Requires Node.js 20 or newer.
 npm run dev
 ```
 
-Open **http://127.0.0.1:5173**. Create your workspace by entering a name, or explore the editable demo. No package installation is needed.
+Open **http://127.0.0.1:5173**. Enter your name to open your saved workspace. A new name creates an empty workspace. The app opens on the name-entry screen each time it loads. No package installation is needed.
 
 ```sh
 npm run check
@@ -40,7 +40,7 @@ The app uses relative module imports and an absolute `/src` asset path; host at 
 - Dashboard with real task counts, seven-day activity, daily goals, focus time, and project progress.
 - Insights for today, trailing 7, 30, or 365 days, with project filters and cadence breakdowns. Completed counts use actual completion dates; pending/rate/project breakdowns use due dates within the selected period.
 - Focus timer linked to a task, adjustable duration, short breaks, and recorded completed sessions. It continues while navigating the app and accounts for background-tab timer throttling using wall-clock time.
-- Light, dark, or system appearance; keyboard shortcuts and responsive layouts.
+- Light, dark, or system appearance with eight theme colors saved per workspace; keyboard shortcuts and responsive layouts.
 - Optional in-app scheduled reminders while the page is open.
 - JSON workspace backup/export and validated import into a new workspace; completed-task CSV export.
 - Undo for task deletion and completion, safe link protocols, import limits, empty states, and accessible dialogs/form labels.
@@ -68,4 +68,4 @@ tests/model.test.mjs    Date, recurrence, completion, backup, isolation checks
 vercel.json             Ready-to-deploy Vercel configuration
 ```
 
-Optional demo data is generated only when **Explore a demo workspace** is chosen. New named workspaces start empty.
+No sample accounts, tasks, or projects are included. Every new person starts with an empty workspace. Returning names restore their saved tasks, projects, history, and theme preferences on the same browser. Name matching ignores capitalization and extra spaces. To return to name entry, use the workspace menu. Old workspaces marked as demo are excluded when loading earlier app data.
