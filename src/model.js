@@ -1,13 +1,13 @@
 export const CADENCES = ['daily', 'weekly', 'monthly', 'yearly'];
 export const COLORS = ['#8b72df', '#57a997', '#df9c58', '#639ed5', '#d77fa2', '#8c98a9'];
 export const ACCENTS = [
-  { id: 'violet', name: 'Violet', light: '#8266d7', dark: '#ad91f7' },
-  { id: 'blue', name: 'Ocean', light: '#3974c8', dark: '#87b5fa' },
-  { id: 'teal', name: 'Teal', light: '#227f82', dark: '#70cbc9' },
-  { id: 'green', name: 'Forest', light: '#39815c', dark: '#88c99f' },
-  { id: 'rose', name: 'Rose', light: '#b54f79', dark: '#ed9ebc' },
-  { id: 'amber', name: 'Amber', light: '#97651d', dark: '#e4bd77' },
-  { id: 'orange', name: 'Sunset', light: '#b75b35', dark: '#efa681' },
+  { id: 'violet', name: 'Violet', light: '#7255c4', dark: '#ad91f7' },
+  { id: 'blue', name: 'Ocean', light: '#2e65b5', dark: '#87b5fa' },
+  { id: 'teal', name: 'Teal', light: '#196e72', dark: '#70cbc9' },
+  { id: 'green', name: 'Forest', light: '#2d704d', dark: '#88c99f' },
+  { id: 'rose', name: 'Rose', light: '#a3426a', dark: '#ed9ebc' },
+  { id: 'amber', name: 'Amber', light: '#875715', dark: '#e4bd77' },
+  { id: 'orange', name: 'Sunset', light: '#a64e2c', dark: '#efa681' },
   { id: 'slate', name: 'Graphite', light: '#596a83', dark: '#a9bad3' },
 ];
 export const normalizeName = name => String(name || '').trim().replace(/\s+/g, ' ');

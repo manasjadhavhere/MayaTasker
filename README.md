@@ -41,6 +41,7 @@ The app uses relative module imports and an absolute `/src` asset path; host at 
 - Insights for today, trailing 7, 30, or 365 days, with project filters and cadence breakdowns. Completed counts use actual completion dates; pending/rate/project breakdowns use due dates within the selected period.
 - Focus timer linked to a task, adjustable duration, short breaks, and recorded completed sessions. It continues while navigating the app and accounts for background-tab timer throttling using wall-clock time.
 - Light, dark, or system appearance with eight theme colors saved per workspace; keyboard shortcuts and responsive layouts.
+- Readable 16 px main text and inputs, secondary text at least 14 px, stronger text contrast, larger controls, visible keyboard focus, and a skip-to-content link. Phone layouts stack forms and keep task metadata visible; dense calendars, charts, and tables scroll within their panels.
 - Optional in-app scheduled reminders while the page is open.
 - JSON workspace backup/export and validated import into a new workspace; completed-task CSV export.
 - Undo for task deletion and completion, safe link protocols, import limits, empty states, and accessible dialogs/form labels.
